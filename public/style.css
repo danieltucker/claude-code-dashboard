@@ -1,0 +1,215 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  font-family: monospace;
+}
+
+body {
+  display: flex;
+}
+
+/* ── Sidebar ── */
+#sidebar {
+  width: 260px;
+  min-width: 260px;
+  height: 100vh;
+  background: #111;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-right: 1px solid #333;
+  overflow-y: auto;
+  transition: transform 0.25s ease;
+  z-index: 100;
+}
+
+#sidebar h2 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #555;
+}
+
+#new-session-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#dir-choice {
+  display: flex;
+  gap: 6px;
+}
+
+.choice-btn {
+  flex: 1;
+  background: #1e1e1e;
+  color: #888;
+  border: 1px solid #333;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.choice-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+#dir-select,
+#new-dir-input {
+  width: 100%;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #e0e0e0;
+  padding: 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+#create-session-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+#create-session-btn:hover { background: #1d4ed8; }
+
+#session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.session-item {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.session-item.active {
+  border-color: #2563eb;
+  color: #60a5fa;
+}
+
+.session-item .kill-btn {
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 4px;
+}
+
+/* ── Main area ── */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+#topbar {
+  display: none; /* hidden on desktop */
+  align-items: center;
+  padding: 10px 14px;
+  background: #111;
+  border-bottom: 1px solid #333;
+  gap: 10px;
+}
+
+#hamburger {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+#topbar-title {
+  font-size: 13px;
+  color: #888;
+}
+
+#terminals {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.terminal-wrapper {
+  display: none;
+  position: absolute;
+  inset: 0; /* top/right/bottom/left all 0 — fills parent exactly */
+  padding: 8px;
+}
+
+.terminal-wrapper.active {
+  display: block;
+}
+
+/* xterm.js needs its container to have explicit height */
+.terminal-wrapper .xterm {
+  height: 100%;
+}
+
+.terminal-wrapper .xterm-viewport {
+  overflow-y: auto !important;
+}
+
+/* ── Overlay for mobile sidebar ── */
+#overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 99;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  #sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    transform: translateX(-100%); /* hidden off-screen by default */
+  }
+
+  #sidebar.open {
+    transform: translateX(0);
+  }
+
+  #overlay.visible {
+    display: block;
+  }
+
+  #topbar {
+    display: flex;
+  }
+}
