@@ -8,6 +8,34 @@ This repo contains a few files that "emulate" terminals directly in the browser.
 Not only that, but you can spawn as many Claude Code sessions as you would like in existing directories, or create new directories and start fresh!
 And maybe best of all -- this uses your existing Claude Code subscription! You do not have to use an API key (which runs higher costs) or create anything special, just run Claude.
 
+## Installation & Setup
+
+**Prerequisites:** Node.js and Claude Code (`claude` CLI) must be installed and available in your PATH.
+
+1. **Clone the repo and install dependencies:**
+   ```bash
+   git clone <repo-url>
+   cd claude-code-dashboard
+   npm install
+   ```
+
+2. **Create a `.env` file** in the project root:
+   ```bash
+   cp .env.example .env
+   ```
+   Or create it manually with the following content:
+   ```
+   BASE_DIR=/path/to/your/base/directory
+   ```
+   Set `BASE_DIR` to the directory you want to use as the root for Claude Code sessions (e.g. `/Users/yourname/dev`).
+
+3. **Start the server:**
+   ```bash
+   node server.js
+   ```
+
+4. **Open your browser** at [http://localhost:8080](http://localhost:8080)
+
 ## A Few Notes
 A couple things to note about the way this is currently built:
 - Each new session created runs `claude --dangerously-skip-permissions` immediately at the time of spawning the session
