@@ -6,6 +6,17 @@ const { WebSocketServer } = require('ws');
 const pty = require('node-pty');
 const path = require('path');
 const fs = require('fs');
+const { execSync } = require('child_process');
+
+// Resolve the claude binary using the user's login shell so PATH from .zshrc/.zprofile is respected
+const SHELL = process.env.SHELL || '/bin/zsh';
+let CLAUDE_BIN = `${process.env.HOME}/.local/bin/claude`; // known fallback
+try {
+  CLAUDE_BIN = execSync(`${SHELL} -l -c 'which claude'`, { timeout: 5000 }).toString().trim();
+  console.log(`[init] Resolved claude binary: ${CLAUDE_BIN}`);
+} catch (e) {
+  console.warn(`[init] Could not resolve claude via login shell, using fallback: ${CLAUDE_BIN}`);
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -23,9 +34,9 @@ app.post('/sessions', (req, res) => {
   const id = Math.random().toString(36).slice(2, 9);
   const cwd = req.body?.cwd?.trim() || BASE_DIR;
 
-  console.log(`[session] Creating session ${id} in ${cwd}`);
+  console.log(`[session] Creating session ${id} in ${cwd} using ${CLAUDE_BIN}`);
 
-  const ptyProcess = pty.spawn('claude', ['--dangerously-skip-permissions'], {
+  const ptyProcess = pty.spawn(CLAUDE_BIN, ['--dangerously-skip-permissions'], {
     name: 'xterm-color',
     cols: 220,
     rows: 50,
