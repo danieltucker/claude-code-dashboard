@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
   <!-- xterm.js from CDN — the terminal emulator library -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
   <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
@@ -18,31 +22,25 @@
   <div id="topbar">
     <button id="hamburger">☰</button>
   </div>
+
   <div id="sidebar">
     <h2>Sessions</h2>
 
     <div id="new-session-form">
 
-    <div id="dir-choice">
-        <button class="choice-btn active" data-mode="existing">Use Existing</button>
-        <button class="choice-btn" data-mode="new">Create New</button>
-    </div>
+      <!-- Default: [dropdown][+] split button -->
+      <div id="dir-choice">
+        <select id="dir-select"></select>
+        <button id="new-btn" title="New project">+</button>
+      </div>
 
-    <div id="existing-dir-panel">
-        <select id="dir-select">
-        <option value="">Loading...</option>
-        </select>
-    </div>
+      <!-- New project form (shown when + is clicked) -->
+      <div id="new-dir-panel" style="display:none">
+        <input type="text" id="new-dir-input" placeholder="New project name" />
+      </div>
 
-    <div id="new-dir-panel" style="display:none">
-        <input
-        type="text"
-        id="new-dir-input"
-        placeholder="New folder name"
-        />
-    </div>
-
-        <button id="create-session-btn">+ New Session</button>
+      <button id="create-session-btn">Start Session</button>
+      <button id="cancel-new-btn" style="display:none">Cancel</button>
     </div>
 
     <div id="session-list"></div>

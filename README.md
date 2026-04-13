@@ -10,6 +10,8 @@ And maybe best of all -- this uses your existing Claude Code subscription! You d
 
 ## Installation & Setup
 
+### Running locally (no Docker)
+
 **Prerequisites:** Node.js and Claude Code (`claude` CLI) must be installed and available in your PATH.
 
 1. **Clone the repo and install dependencies:**
@@ -19,31 +21,66 @@ And maybe best of all -- this uses your existing Claude Code subscription! You d
    npm install
    ```
 
-2. **Create a `.env` file** in the project root:
+2. **Configure your environment:**
    ```bash
    cp .env.example .env
    ```
-   Or create it manually with the following content:
-   ```
-   BASE_DIR=/path/to/your/base/directory
-   ```
-   Set `BASE_DIR` to the directory you want to use as the root for Claude Code sessions (e.g. `/Users/yourname/dev`).
+   Then edit `.env` — see [Environment Variables](#environment-variables) below.
 
 3. **Start the server:**
    ```bash
    node server.js
+   # or: npm start
    ```
 
 4. **Open your browser** at [http://localhost:8080](http://localhost:8080)
 
+---
+
+### Running with Docker
+
+Docker is the recommended way to run the dashboard. It sandboxes Claude Code so that `--dangerously-skip-permissions` cannot affect your host OS directly.
+
+1. **Configure your environment:**
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` and set `HOST_BASE_DIR` to the folder on your machine containing your projects, and fill in `AUTH_USERS` and `SESSION_SECRET`.
+
+2. **Build and start:**
+   ```bash
+   docker compose up --build
+   ```
+
+3. **Open your browser** at [http://localhost:8080](http://localhost:8080)
+
+Your projects directory is mounted into the container at `/workspace`. Your existing Claude Code credentials (`~/.claude`) are also mounted so the container can authenticate without any extra setup.
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in the values. All variables are described below.
+
+| Variable | Required | Description |
+|---|---|---|
+| `BASE_DIR` | Yes | The directory the server lists and creates projects in. When running locally, set this to your projects folder (e.g. `/Users/yourname/dev`). When running with Docker, set this to `/workspace`. |
+| `HOST_BASE_DIR` | Docker only | The path on your **host machine** to mount into the container as `/workspace`. Example: `/Users/yourname/dev`. |
+| `AUTH_USERS` | Yes | Comma-separated `username:password` pairs for login. Example: `alice:mypassword,bob:anotherpassword`. |
+| `SESSION_SECRET` | Yes | A random string used to sign session cookies. Change this before deploying — any long random value works. |
+| `CLAUDE_BIN` | No | Override the path to the `claude` binary. Auto-detected from your login shell if not set. Useful in custom environments where `claude` is not on `$PATH`. |
+
+---
+
 ## A Few Notes
-A couple things to note about the way this is currently built:
-- Each new session created runs `claude --dangerously-skip-permissions` immediately at the time of spawning the session
-    - This is controlled in `server.js` on line 28. If you prefer to spawn Claude **with** permissions, just remove the skip permissions argument from the array.
-- This does not provide direct terminal access at this time, it just spawns Claude to work within an existing directory or allows you to create a new one and then immediately spawn Claude Code.
+
+- A login page protects all routes. Users are defined via `AUTH_USERS` in `.env` — add as many `username:password` pairs as needed.
+- Each new session runs `claude --dangerously-skip-permissions` immediately at spawn time. If you prefer to run Claude **with** permissions, remove `--dangerously-skip-permissions` from the args array in `server.js`.
+- This does not provide direct terminal access — it only spawns Claude Code within a selected directory. You cannot run arbitrary shell commands.
 
 ## Security
-**Do NOT** self-host this without a security layer in front. This will provide direct access to whatever directory you set as your `BASE_DIR` and should use some layer of protection. I have use a Cloudflare Tunnel with Zero Access which is easy enough to setup.
+
+**Do NOT** self-host this without a security layer in front. This will provide access to whatever directory you set as `BASE_DIR`. I use a Cloudflare Tunnel with Zero Trust Access, which is straightforward to set up.
 
 Enjoy!
 pb-crackers

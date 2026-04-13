@@ -1,4 +1,14 @@
+# Dependencies
 node_modules/
+
+# Environment & secrets
 .env
+
+# OS metadata
 .DS_Store
+
+# Editor & tool state
+.claude
+
+# Shell config (should not be here — consider deleting this file)
 .zshrc

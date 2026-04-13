@@ -1,159 +1,306 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+/* ── Design tokens ───────────────────────────────────────────────────────── */
+:root {
+  --bg:           #080810;
+  --surface-1:    #0f0f18;
+  --surface-2:    #16161f;
+  --surface-3:    #1e1e2a;
+  --surface-4:    #252533;
+  --border:       #ffffff0f;
+  --border-mid:   #ffffff18;
+  --accent:       #7c6af7;
+  --accent-hover: #6a58e6;
+  --accent-dim:   #7c6af720;
+  --green:        #34d399;
+  --green-hover:  #10b981;
+  --red:          #f87171;
+  --text-1:       #eeeef5;
+  --text-2:       #9898b0;
+  --text-3:       #55556a;
+  --font-ui:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:    ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+  --radius-sm:    5px;
+  --radius:       8px;
+  --radius-lg:    12px;
+  --ease:         cubic-bezier(0.16, 1, 0.3, 1);
+  --t:            140ms;
 }
+
+/* ── Reset ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   height: 100%;
   overflow: hidden;
-  background: #1a1a1a;
-  color: #e0e0e0;
-  font-family: monospace;
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
 }
 
-body {
-  display: flex;
-}
+body { display: flex; }
 
-/* ── Sidebar ── */
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
 #sidebar {
-  width: 260px;
-  min-width: 260px;
+  width: 256px;
+  min-width: 256px;
   height: 100vh;
-  background: #111;
-  padding: 16px;
+  background: var(--surface-1);
+  border-right: 1px solid var(--border);
+  padding: 18px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border-right: 1px solid #333;
+  gap: 18px;
   overflow-y: auto;
-  transition: transform 0.25s ease;
+  transition: transform 0.28s var(--ease);
   z-index: 100;
 }
 
-#sidebar h2 {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  color: #555;
+#sidebar::-webkit-scrollbar { width: 3px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb {
+  background: var(--surface-4);
+  border-radius: 2px;
 }
 
+#sidebar h2 {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+  padding: 0 4px;
+}
+
+/* ── New session form ────────────────────────────────────────────────────── */
 #new-session-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-#dir-choice {
-  display: flex;
   gap: 6px;
 }
 
-.choice-btn {
+/* ── Split button: [dropdown][+] ─────────────────────────────────────────── */
+#dir-choice {
+  display: flex;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-mid);
+  overflow: hidden;
+  background: var(--surface-2);
+  transition: border-color var(--t);
+}
+
+#dir-choice:focus-within {
+  border-color: var(--accent);
+}
+
+#dir-select {
   flex: 1;
-  background: #1e1e1e;
-  color: #888;
-  border: 1px solid #333;
-  padding: 6px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: monospace;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-1);
+  padding: 8px 28px 8px 10px;
+  font-family: var(--font-ui);
   font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2355556a'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
 }
 
-.choice-btn.active {
-  background: #2563eb;
-  color: white;
-  border-color: #2563eb;
+#dir-select:focus { outline: none; }
+
+#dir-select option {
+  background: var(--surface-3);
+  color: var(--text-1);
 }
 
-#dir-select,
+#new-btn {
+  width: 36px;
+  flex-shrink: 0;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-left: 1px solid var(--border);
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--t);
+}
+
+#new-btn:hover { background: var(--accent-hover); }
+
+/* ── New project input ───────────────────────────────────────────────────── */
 #new-dir-input {
   width: 100%;
-  background: #1e1e1e;
-  border: 1px solid #333;
-  color: #e0e0e0;
-  padding: 8px;
-  border-radius: 4px;
-  font-family: monospace;
+  background: var(--surface-2);
+  border: 1px solid var(--border-mid);
+  color: var(--text-1);
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 12px;
+  font-weight: 500;
+  transition: border-color var(--t), background var(--t);
 }
 
+#new-dir-input:focus {
+  outline: none;
+  border-color: var(--green);
+  background: var(--surface-3);
+}
+
+#new-dir-input::placeholder { color: var(--text-3); }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
 #create-session-btn {
-  background: #2563eb;
-  color: white;
+  background: var(--accent);
+  color: #fff;
   border: none;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 9px;
+  border-radius: var(--radius);
   cursor: pointer;
-  font-family: monospace;
-  font-size: 13px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background var(--t), opacity var(--t);
 }
 
-#create-session-btn:hover { background: #1d4ed8; }
+#create-session-btn:hover:not(:disabled) { background: var(--accent-hover); }
 
+#create-session-btn:disabled {
+  background: var(--surface-3);
+  color: var(--text-3);
+  cursor: not-allowed;
+}
+
+#cancel-new-btn {
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border-mid);
+  padding: 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  transition: color var(--t), border-color var(--t);
+}
+
+#cancel-new-btn:hover {
+  color: var(--text-1);
+  border-color: var(--text-3);
+}
+
+/* ── Session list ────────────────────────────────────────────────────────── */
 #session-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
 .session-item {
-  background: #1e1e1e;
-  border: 1px solid #333;
-  border-radius: 4px;
-  padding: 8px;
+  position: relative;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
   cursor: pointer;
-  font-size: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: var(--text-2);
+  transition: background var(--t), color var(--t), border-color var(--t);
+  overflow: hidden;
+}
+
+.session-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity var(--t);
+}
+
+.session-item:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text-1);
 }
 
 .session-item.active {
-  border-color: #2563eb;
-  color: #60a5fa;
+  background: var(--accent-dim);
+  border-color: var(--accent)30;
+  color: var(--text-1);
 }
 
-.session-item .kill-btn {
-  color: #ef4444;
+.session-item.active::before { opacity: 1; }
+
+.session-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.kill-btn {
+  color: var(--text-3);
   cursor: pointer;
   font-size: 11px;
-  padding: 2px 4px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: color var(--t), opacity var(--t), background var(--t);
 }
 
-/* ── Main area ── */
+.session-item:hover .kill-btn,
+.session-item.active .kill-btn { opacity: 1; }
+
+.kill-btn:hover {
+  color: var(--red);
+  background: #f871711a;
+}
+
+/* ── Main / terminal area ────────────────────────────────────────────────── */
 #main {
   flex: 1;
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  position: relative;
+  background: #09090f;
 }
 
 #topbar {
-  display: none; /* hidden on desktop */
+  display: none;
   align-items: center;
   padding: 10px 14px;
-  background: #111;
-  border-bottom: 1px solid #333;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border);
   gap: 10px;
 }
 
 #hamburger {
   background: none;
   border: none;
-  color: #e0e0e0;
-  font-size: 20px;
+  color: var(--text-1);
+  font-size: 18px;
   cursor: pointer;
   line-height: 1;
-}
-
-#topbar-title {
-  font-size: 13px;
-  color: #888;
 }
 
 #terminals {
@@ -165,51 +312,34 @@ body {
 .terminal-wrapper {
   display: none;
   position: absolute;
-  inset: 0; /* top/right/bottom/left all 0 — fills parent exactly */
-  padding: 8px;
+  inset: 0;
+  padding: 10px;
 }
 
-.terminal-wrapper.active {
-  display: block;
-}
+.terminal-wrapper.active { display: block; }
+.terminal-wrapper .xterm { height: 100%; }
+.terminal-wrapper .xterm-viewport { overflow-y: auto !important; }
 
-/* xterm.js needs its container to have explicit height */
-.terminal-wrapper .xterm {
-  height: 100%;
-}
-
-.terminal-wrapper .xterm-viewport {
-  overflow-y: auto !important;
-}
-
-/* ── Overlay for mobile sidebar ── */
+/* ── Mobile overlay ──────────────────────────────────────────────────────── */
 #overlay {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 99;
 }
 
-/* ── Mobile ── */
+/* ── Mobile ──────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   #sidebar {
     position: fixed;
-    left: 0;
-    top: 0;
+    left: 0; top: 0;
     height: 100vh;
-    transform: translateX(-100%); /* hidden off-screen by default */
+    transform: translateX(-100%);
   }
-
-  #sidebar.open {
-    transform: translateX(0);
-  }
-
-  #overlay.visible {
-    display: block;
-  }
-
-  #topbar {
-    display: flex;
-  }
+  #sidebar.open { transform: translateX(0); }
+  #overlay.visible { display: block; }
+  #topbar { display: flex; }
 }

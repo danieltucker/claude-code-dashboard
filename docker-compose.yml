@@ -1,0 +1,12 @@
+services:
+  dashboard:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file: .env
+    volumes:
+      # Your projects directory — set HOST_BASE_DIR in .env
+      - ${HOST_BASE_DIR}:/workspace
+      # Claude Code credentials from your host machine
+      - ${HOME}/.claude:/root/.claude
+    restart: unless-stopped

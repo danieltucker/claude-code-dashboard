@@ -1,45 +1,65 @@
 const sessions = {};
 let activeSessionId = null;
-let currentMode = 'existing'; // track which mode the user is in
+let currentMode = 'existing';
 
-const sessionList = document.getElementById('session-list');
+const sessionList  = document.getElementById('session-list');
 const terminalsDiv = document.getElementById('terminals');
-const newDirInput = document.getElementById('new-dir-input');
-const dirSelect = document.getElementById('dir-select');
-const createBtn = document.getElementById('create-session-btn');
-const choiceBtns = document.querySelectorAll('.choice-btn');
-const existingPanel = document.getElementById('existing-dir-panel');
-const newPanel = document.getElementById('new-dir-panel');
+const newDirInput  = document.getElementById('new-dir-input');
+const dirSelect    = document.getElementById('dir-select');
+const createBtn    = document.getElementById('create-session-btn');
+const cancelBtn    = document.getElementById('cancel-new-btn');
+const newBtn       = document.getElementById('new-btn');
+const dirChoice    = document.getElementById('dir-choice');
+const newPanel     = document.getElementById('new-dir-panel');
 
-// Load available directories on page load
-async function loadDirectories() {
+function switchMode(mode) {
+  currentMode = mode;
+  if (mode === 'existing') {
+    dirChoice.style.display  = 'flex';
+    newPanel.style.display   = 'none';
+    cancelBtn.style.display  = 'none';
+    createBtn.textContent    = 'Start Session';
+    createBtn.disabled       = dirSelect.value === '';
+  } else {
+    dirChoice.style.display  = 'none';
+    newPanel.style.display   = 'block';
+    cancelBtn.style.display  = 'block';
+    createBtn.textContent    = 'Create Project';
+    createBtn.disabled       = false;
+    setTimeout(() => newDirInput.focus(), 0);
+  }
+}
+
+async function loadDirectories(selectName = null) {
   console.log('[dirs] Fetching available directories');
   const res = await fetch('/directories');
   const { dirs } = await res.json();
   console.log('[dirs] Found:', dirs);
 
-  dirSelect.innerHTML = dirs.length
-    ? dirs.map(d => `<option value="${d}">${d}</option>`).join('')
-    : '<option value="">No directories found</option>';
+  if (dirs.length === 0) {
+    dirSelect.innerHTML  = '<option value="">No projects yet</option>';
+    createBtn.disabled   = true;
+  } else {
+    dirSelect.innerHTML = dirs.map(d => `<option value="${d}">${d}</option>`).join('');
+    if (selectName) dirSelect.value = selectName;
+    createBtn.disabled = false;
+  }
+
+  // If we were in "new" mode and a project was just created, return to existing
+  if (selectName && currentMode === 'new') switchMode('existing');
 }
 
 loadDirectories();
 
-// Toggle between existing / new modes
-choiceBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    currentMode = btn.dataset.mode;
-    choiceBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+newBtn.addEventListener('click', () => switchMode('new'));
 
-    if (currentMode === 'existing') {
-      existingPanel.style.display = 'block';
-      newPanel.style.display = 'none';
-    } else {
-      existingPanel.style.display = 'none';
-      newPanel.style.display = 'block';
-    }
-  });
+cancelBtn.addEventListener('click', () => {
+  newDirInput.value = '';
+  switchMode('existing');
+});
+
+dirSelect.addEventListener('change', () => {
+  createBtn.disabled = dirSelect.value === '';
 });
 
 createBtn.addEventListener('click', async () => {
@@ -48,37 +68,33 @@ createBtn.addEventListener('click', async () => {
 
   if (currentMode === 'new') {
     const name = newDirInput.value.trim();
+    if (!name) return alert('Please enter a project name.');
 
-    if (!name) return alert('Please enter a folder name.');
-
-    // Check if it already exists
-    const checkRes = await fetch(`/directories/${name}/exists`);
-    const { exists } = await checkRes.json();
+    const checkRes = await fetch(`/directories/${encodeURIComponent(name)}/exists`);
+    const { exists, path: dirPath } = await checkRes.json();
 
     if (exists) {
       const useExisting = confirm(`"${name}" already exists. Open it anyway?`);
       if (!useExisting) return;
-      cwd = `/home/phillip-dougherty/${name}`;
+      cwd = dirPath;
     } else {
-      // Create it
       const res = await fetch('/directories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name })
       });
       const data = await res.json();
-      if (!res.ok) return alert('Failed to create directory: ' + data.error);
+      if (!res.ok) return alert('Failed to create project: ' + data.error);
       cwd = data.path;
-      await loadDirectories(); // refresh the list
     }
+    newDirInput.value = '';
+    await loadDirectories(name);
 
   } else {
-    // Existing mode
     const selected = dirSelect.value;
-    if (!selected) return alert('Please select a directory.');
+    if (!selected) return;
 
-    // Verify it still exists (could have been deleted externally)
-    const checkRes = await fetch(`/directories/${selected}/exists`);
+    const checkRes = await fetch(`/directories/${encodeURIComponent(selected)}/exists`);
     const { exists, path: dirPath } = await checkRes.json();
 
     if (!exists) {
@@ -86,21 +102,23 @@ createBtn.addEventListener('click', async () => {
       await loadDirectories();
       return;
     }
-
     cwd = dirPath;
   }
 
-  // Create the session
   console.log('[create] Spawning session in:', cwd);
   const res = await fetch('/sessions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ cwd })
   });
+
+  if (res.status === 401) {
+    location.href = '/login';
+    return;
+  }
+
   const { id, cwd: resolvedCwd } = await res.json();
   console.log('[create] Session created:', { id, resolvedCwd });
-
-  newDirInput.value = '';
   spawnTerminal(id, resolvedCwd);
 });
 
@@ -109,11 +127,33 @@ function spawnTerminal(id, cwd) {
 
   const term = new Terminal({
     cursorBlink: true,
+    cursorStyle: 'bar',
     fontSize: 13,
-    fontFamily: 'monospace',
+    fontFamily: "'Cascadia Code', 'Fira Code', ui-monospace, monospace",
+    fontWeight: '400',
+    lineHeight: 1.5,
     theme: {
-      background: '#1a1a1a',
-      foreground: '#e0e0e0',
+      background:   '#09090f',
+      foreground:   '#ddddf0',
+      cursor:       '#7c6af7',
+      cursorAccent: '#09090f',
+      selectionBackground: '#7c6af740',
+      black:        '#1e1e2a',
+      red:          '#f87171',
+      green:        '#34d399',
+      yellow:       '#fbbf24',
+      blue:         '#7c6af7',
+      magenta:      '#c084fc',
+      cyan:         '#22d3ee',
+      white:        '#ddddf0',
+      brightBlack:  '#55556a',
+      brightRed:    '#fca5a5',
+      brightGreen:  '#6ee7b7',
+      brightYellow: '#fde68a',
+      brightBlue:   '#a78bfa',
+      brightMagenta:'#d8b4fe',
+      brightCyan:   '#67e8f9',
+      brightWhite:  '#f5f5ff',
     }
   });
 
@@ -132,19 +172,14 @@ function spawnTerminal(id, cwd) {
 
   ws.onopen = () => {
     console.log(`[ws] WebSocket open for session ${id}`);
-    // fit AFTER ws is open so we can immediately send the correct size
     fitAddon.fit();
-
-    // tell the PTY our actual dimensions
     ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
   };
 
   ws.onmessage = (e) => term.write(e.data);
+  ws.onerror   = (err) => console.error(`[ws] error for session ${id}:`, err);
+  ws.onclose   = () => console.log(`[ws] closed for session ${id}`);
 
-  ws.onerror = (err) => console.error(`[ws] error for session ${id}:`, err);
-  ws.onclose = () => console.log(`[ws] closed for session ${id}`);
-
-  // when xterm.js resizes, sync the PTY
   term.onResize(({ cols, rows }) => {
     console.log(`[terminal] resize ${id}: ${cols}x${rows}`);
     if (ws.readyState === ws.OPEN) {
@@ -156,7 +191,6 @@ function spawnTerminal(id, cwd) {
     if (ws.readyState === ws.OPEN) ws.send(data);
   });
 
-  // store everything on the session — including fitAddon
   sessions[id] = { term, ws, cwd, fitAddon };
 
   addSessionToSidebar(id, cwd);
@@ -192,7 +226,6 @@ function switchToSession(id) {
 
   activeSessionId = id;
 
-  // use requestAnimationFrame so the DOM is visible before we measure it
   requestAnimationFrame(() => {
     sessions[id]?.fitAddon?.fit();
   });
@@ -203,8 +236,8 @@ function switchToSession(id) {
 async function killSession(id) {
   try {
     await fetch(`/sessions/${id}`, { method: 'DELETE' });
-  } catch(err) {
-    console.log(`[kill] Server-side session ${id} already gone.`)
+  } catch (err) {
+    console.log(`[kill] Server-side session ${id} already gone.`);
   }
   sessions[id]?.ws.close();
   sessions[id]?.term.dispose();
@@ -212,7 +245,6 @@ async function killSession(id) {
   document.getElementById(`session-item-${id}`)?.remove();
   delete sessions[id];
 
-  // Switch to another session if one exists
   const remaining = Object.keys(sessions);
   if (remaining.length) switchToSession(remaining[0]);
 }
@@ -224,8 +256,8 @@ window.addEventListener('resize', () => {
 });
 
 // Mobile sidebar
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('overlay');
+const sidebar   = document.getElementById('sidebar');
+const overlay   = document.getElementById('overlay');
 const hamburger = document.getElementById('hamburger');
 
 hamburger?.addEventListener('click', () => {
@@ -238,7 +270,6 @@ overlay.addEventListener('click', () => {
   overlay.classList.remove('visible');
 });
 
-// close sidebar when a session is selected on mobile
 function closeSidebarOnMobile() {
   if (window.innerWidth <= 768) {
     sidebar.classList.remove('open');
