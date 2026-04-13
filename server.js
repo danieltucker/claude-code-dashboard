@@ -23,6 +23,8 @@ if (!process.env.CLAUDE_BIN) {
   console.log(`[init] Using CLAUDE_BIN from env: ${CLAUDE_BIN}`);
 }
 
+const REQUIRE_AUTH = process.env.REQUIRE_AUTH !== 'false';
+
 // Parse users from AUTH_USERS env var: "user1:pass1,user2:pass2"
 const USERS = {};
 (process.env.AUTH_USERS || '').split(',').forEach(entry => {
@@ -33,9 +35,10 @@ const USERS = {};
     USERS[username] = password;
   }
 });
-if (Object.keys(USERS).length === 0) {
+if (REQUIRE_AUTH && Object.keys(USERS).length === 0) {
   console.warn('[auth] WARNING: No AUTH_USERS configured — all login attempts will fail.');
 }
+console.log(`[init] Authentication: ${REQUIRE_AUTH ? 'enabled' : 'disabled'}`);
 
 const app = express();
 const server = http.createServer(app);
@@ -57,6 +60,7 @@ app.use(sessionMiddleware);
 app.use(express.json());
 
 function requireAuth(req, res, next) {
+  if (!REQUIRE_AUTH) return next();
   if (req.session?.user) return next();
   if (req.headers['accept']?.includes('application/json') ||
       req.headers['content-type']?.includes('application/json')) {
@@ -133,7 +137,7 @@ app.post('/sessions', (req, res) => {
 wss.on('connection', (ws, req) => {
   const fakeRes = { getHeader: () => {}, setHeader: () => {}, end: () => {} };
   sessionMiddleware(req, fakeRes, () => {
-    if (!req.session?.user) {
+    if (REQUIRE_AUTH && !req.session?.user) {
       console.log('[ws] Rejected unauthenticated WebSocket connection');
       ws.close(1008, 'Unauthorized');
       return;

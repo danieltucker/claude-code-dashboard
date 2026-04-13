@@ -1,4 +1,103 @@
 const sessions = {};
+
+// ── Theme system ──────────────────────────────────────────────────────────────
+
+const TERMINAL_THEMES = {
+  nebula: {
+    background: '#09090f', foreground: '#ddddf0', cursor: '#7c6af7',
+    cursorAccent: '#09090f', selectionBackground: '#7c6af740',
+    black: '#1e1e2a', red: '#f87171', green: '#34d399', yellow: '#fbbf24',
+    blue: '#7c6af7', magenta: '#c084fc', cyan: '#22d3ee', white: '#ddddf0',
+    brightBlack: '#55556a', brightRed: '#fca5a5', brightGreen: '#6ee7b7',
+    brightYellow: '#fde68a', brightBlue: '#a78bfa', brightMagenta: '#d8b4fe',
+    brightCyan: '#67e8f9', brightWhite: '#f5f5ff',
+  },
+  dark: {
+    background: '#0a0a0a', foreground: '#e0e0e0', cursor: '#3b82f6',
+    cursorAccent: '#0a0a0a', selectionBackground: '#3b82f640',
+    black: '#1a1a1a', red: '#f87171', green: '#4ade80', yellow: '#facc15',
+    blue: '#60a5fa', magenta: '#c084fc', cyan: '#22d3ee', white: '#e0e0e0',
+    brightBlack: '#444', brightRed: '#fca5a5', brightGreen: '#86efac',
+    brightYellow: '#fef08a', brightBlue: '#93c5fd', brightMagenta: '#d8b4fe',
+    brightCyan: '#67e8f9', brightWhite: '#ffffff',
+  },
+  light: {
+    background: '#fafafa', foreground: '#1a1a2e', cursor: '#6366f1',
+    cursorAccent: '#fafafa', selectionBackground: '#6366f130',
+    black: '#1a1a2e', red: '#dc2626', green: '#059669', yellow: '#d97706',
+    blue: '#4f46e5', magenta: '#7c3aed', cyan: '#0891b2', white: '#6b7280',
+    brightBlack: '#9ca3af', brightRed: '#ef4444', brightGreen: '#10b981',
+    brightYellow: '#f59e0b', brightBlue: '#6366f1', brightMagenta: '#8b5cf6',
+    brightCyan: '#06b6d4', brightWhite: '#1a1a2e',
+  },
+  ember: {
+    background: '#0a0807', foreground: '#f5ede6', cursor: '#d4532a',
+    cursorAccent: '#0a0807', selectionBackground: '#d4532a40',
+    black: '#231b15', red: '#e05530', green: '#e8963a', yellow: '#f5c842',
+    blue: '#d4532a', magenta: '#c87050', cyan: '#d4956a', white: '#f5ede6',
+    brightBlack: '#605040', brightRed: '#f07050', brightGreen: '#f5b050',
+    brightYellow: '#f5d870', brightBlue: '#e87050', brightMagenta: '#d49070',
+    brightCyan: '#e8b090', brightWhite: '#fff8f0',
+  },
+  claude: {
+    background: '#0e0b09', foreground: '#f0e4d8', cursor: '#d97559',
+    cursorAccent: '#0e0b09', selectionBackground: '#d9755940',
+    black: '#26201a', red: '#e07060', green: '#34d399', yellow: '#f5a623',
+    blue: '#d97559', magenta: '#c084a0', cyan: '#7ec8c8', white: '#f0e4d8',
+    brightBlack: '#5e4e40', brightRed: '#f0907a', brightGreen: '#6ee7b7',
+    brightYellow: '#fbbf67', brightBlue: '#e8956e', brightMagenta: '#d4a0b8',
+    brightCyan: '#a8d8d8', brightWhite: '#fdf5ee',
+  },
+};
+
+function applyTheme(name) {
+  if (!TERMINAL_THEMES[name]) name = 'nebula';
+  document.documentElement.dataset.theme = name;
+  localStorage.setItem('theme', name);
+
+  // Update all live terminals
+  Object.values(sessions).forEach(({ term }) => {
+    term.options.theme = TERMINAL_THEMES[name];
+  });
+
+  // Reflect active state on theme buttons
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === name);
+  });
+}
+
+function currentTheme() {
+  return document.documentElement.dataset.theme || 'nebula';
+}
+
+// Apply saved theme on load (inline script in <head> handles the very first
+// paint; this call syncs the button states once the DOM is ready)
+applyTheme(localStorage.getItem('theme') || 'nebula');
+
+// ── Config panel ──────────────────────────────────────────────────────────────
+
+const configOverlay = document.getElementById('config-overlay');
+const configBtn     = document.getElementById('config-btn');
+const configClose   = document.getElementById('config-close');
+
+configBtn.addEventListener('click', () => {
+  configOverlay.hidden = false;
+  // Sync active state in case theme changed externally
+  applyTheme(currentTheme());
+});
+
+configClose.addEventListener('click', () => { configOverlay.hidden = true; });
+
+configOverlay.addEventListener('click', (e) => {
+  if (e.target === configOverlay) configOverlay.hidden = true;
+});
+
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+});
+
+// ── Session management ────────────────────────────────────────────────────────
+
 let activeSessionId = null;
 let currentMode = 'existing';
 
@@ -37,15 +136,14 @@ async function loadDirectories(selectName = null) {
   console.log('[dirs] Found:', dirs);
 
   if (dirs.length === 0) {
-    dirSelect.innerHTML  = '<option value="">No projects yet</option>';
-    createBtn.disabled   = true;
+    dirSelect.innerHTML = '<option value="">No projects yet</option>';
+    createBtn.disabled  = true;
   } else {
     dirSelect.innerHTML = dirs.map(d => `<option value="${d}">${d}</option>`).join('');
     if (selectName) dirSelect.value = selectName;
     createBtn.disabled = false;
   }
 
-  // If we were in "new" mode and a project was just created, return to existing
   if (selectName && currentMode === 'new') switchMode('existing');
 }
 
@@ -132,29 +230,7 @@ function spawnTerminal(id, cwd) {
     fontFamily: "'Cascadia Code', 'Fira Code', ui-monospace, monospace",
     fontWeight: '400',
     lineHeight: 1.5,
-    theme: {
-      background:   '#09090f',
-      foreground:   '#ddddf0',
-      cursor:       '#7c6af7',
-      cursorAccent: '#09090f',
-      selectionBackground: '#7c6af740',
-      black:        '#1e1e2a',
-      red:          '#f87171',
-      green:        '#34d399',
-      yellow:       '#fbbf24',
-      blue:         '#7c6af7',
-      magenta:      '#c084fc',
-      cyan:         '#22d3ee',
-      white:        '#ddddf0',
-      brightBlack:  '#55556a',
-      brightRed:    '#fca5a5',
-      brightGreen:  '#6ee7b7',
-      brightYellow: '#fde68a',
-      brightBlue:   '#a78bfa',
-      brightMagenta:'#d8b4fe',
-      brightCyan:   '#67e8f9',
-      brightWhite:  '#f5f5ff',
-    }
+    theme: TERMINAL_THEMES[currentTheme()],
   });
 
   const fitAddon = new FitAddon.FitAddon();
@@ -255,7 +331,8 @@ window.addEventListener('resize', () => {
   }
 });
 
-// Mobile sidebar
+// ── Mobile sidebar ────────────────────────────────────────────────────────────
+
 const sidebar   = document.getElementById('sidebar');
 const overlay   = document.getElementById('overlay');
 const hamburger = document.getElementById('hamburger');

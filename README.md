@@ -66,8 +66,9 @@ Copy `.env.example` to `.env` and fill in the values. All variables are describe
 |---|---|---|
 | `BASE_DIR` | Yes | The directory the server lists and creates projects in. When running locally, set this to your projects folder (e.g. `/Users/yourname/dev`). When running with Docker, set this to `/workspace`. |
 | `HOST_BASE_DIR` | Docker only | The path on your **host machine** to mount into the container as `/workspace`. Example: `/Users/yourname/dev`. |
-| `AUTH_USERS` | Yes | Comma-separated `username:password` pairs for login. Example: `alice:mypassword,bob:anotherpassword`. |
-| `SESSION_SECRET` | Yes | A random string used to sign session cookies. Change this before deploying — any long random value works. |
+| `REQUIRE_AUTH` | No | Set to `false` to disable the login page entirely. Defaults to `true`. Useful on a trusted private network where you don't need per-user login. |
+| `AUTH_USERS` | If auth enabled | Comma-separated `username:password` pairs for login. Example: `alice:mypassword,bob:anotherpassword`. |
+| `SESSION_SECRET` | If auth enabled | A random string used to sign session cookies. Change this before deploying — any long random value works. |
 | `CLAUDE_BIN` | No | Override the path to the `claude` binary. Auto-detected from your login shell if not set. Useful in custom environments where `claude` is not on `$PATH`. |
 
 ---
